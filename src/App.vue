@@ -1,10 +1,11 @@
 <template>
   <div id="app">
     <h2 v-text="status"></h2>
+    <h3 v-text="'Step: '+step"></h3>
     <div class="action">
-      <button v-text="play" @click="init"></button>
-      <span v-text="'Step: '+step"></span>
-      <button @click="togglePath">Show Path</button>
+      <button v-text="playText" @click="init"></button>
+      <button @click="togglePath" v-text="pathText">Show Path</button>
+      <button @click="toggleCoord" v-text="coordText">Show Coord</button>
     </div>
     <div class="board">
       <svg :width="width" :height="height">
@@ -12,6 +13,7 @@
           <chatnoir-hexagon v-for="(cell, key) in pixels"
                             :key="key"
                             :cell="cell"
+                            :showCoord="showCoord"
                             :radius="radius"
                             :interval="interval">
           </chatnoir-hexagon>
@@ -42,8 +44,9 @@ export default m =
     odd: [
       [0, -1], [1, 0], [0, 1], [-1, 1], [-1, 0], [-1, -1]
     ]
-    play: 'Play'
+    #play: 'Play'
     showPath: true
+    showCoord: false
     step: 0
     win: false
     lose: false
@@ -60,7 +63,9 @@ export default m =
     pixels: ->
       pixels = {}
       for key, cell of @cells
-        pixels[key] = cell
+        pixels[key] = {}
+        pixels[key].x = cell.x
+        pixels[key].y = cell.y
         if cell.selected
           pixels[key].selected = true
         else
@@ -75,6 +80,12 @@ export default m =
           pixels[key].path = false
       pixels
 
+    playText: ->
+      if @win || @lose
+        'Replay'
+      else
+        'Play'
+
     status: ->
       if @win
         'YOU WIN'
@@ -82,6 +93,18 @@ export default m =
         'YOU LOSE'
       else
         'Chat Noir'
+
+    pathText: ->
+      if @showPath
+        'Hide Path'
+      else
+        'Show Path'
+
+    coordText: ->
+      if @showCoord
+        'Hide Coord'
+      else
+        'Show Coord'
 
   created: ->
     @init()
@@ -94,6 +117,9 @@ export default m =
       @createBlock()
       @win = false
       @lose = false
+      @step = 0
+      @get_path()
+      @drawPath()
 
     createCell: ->
       cells = {}
@@ -119,6 +145,9 @@ export default m =
 
     togglePath: ->
       @showPath = !@showPath
+
+    toggleCoord: ->
+      @showCoord = !@showCoord
 
     hex_key: (x, y) ->
       x + '-' + y
@@ -267,12 +296,15 @@ export default m =
   margin-top: 60px;
 }
 
+div.board {
+  margin: 25px -27px 25px 27px;
+}
+
 div.action {
   display: flex;
   flex: auto;
   align-items: center;
   justify-content: center;
-  margin: 1rem 0rem 2rem -3rem;
 }
 
 button {
@@ -281,6 +313,7 @@ button {
   border: none;
   cursor: pointer;
   background: #c6ff00;
+  margin: 0 1.5rem;
 }
 
 span {

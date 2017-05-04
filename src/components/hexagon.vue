@@ -4,7 +4,7 @@
              :ry="radius*0.95"
              :class="status">
     </ellipse>
-    <text y="0.4em">
+    <text v-show="showCoord" y="0.4em">
       <tspan class="q" v-text="x"></tspan>
       <tspan>,</tspan>
       <tspan class="r" v-text="y"></tspan>
@@ -19,6 +19,7 @@
       radius: Number
       cell: Object
       interval: Number
+      showCoord: Boolean
       #caught:
       #  type: Boolean
       #  default: false

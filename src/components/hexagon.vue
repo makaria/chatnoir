@@ -49,7 +49,10 @@
 
       status: ->
         if @caught
-          'caught'
+          if @$parent.win || @$parent.lose
+            'finished'
+          else
+            'caught'
         else if @path
           'path'
         else if @selected
@@ -94,6 +97,10 @@ ellipse {
 
 .path {
   fill: white;
+}
+
+.finished {
+  fill: red;
 }
 
 </style>

@@ -8,4 +8,4 @@ Vue::$prefix = 'chatnoir-'
 
 new Vue
   el: '#app',
-  render: (h) => h(App)
+  render: (h) -> h App

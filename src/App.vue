@@ -50,6 +50,7 @@ export default m =
     step: 0
     win: false
     lose: false
+    bfs: {}
 
   computed:
     width: ->
@@ -176,17 +177,6 @@ export default m =
     point2hex: (x, y) ->
       @hex x, y, 1-x-y
 
-    hex_subtract: (a, b) ->
-      @hex a.x - (b.x), a.y - (b.y), a.z - (b.z)
-
-    hex_length: (hex) ->
-      Math.trunc((Math.abs(hex.x) + Math.abs(hex.y) + Math.abs(hex.z)) / 2)
-
-    hex_distance: (a, b) ->
-      hex_a = @point2hex a.x, a.y
-      hex_b = @point2hex b.x, b.y
-      @hex_length @hex_subtract hex_a, hex_b
-
     pick: (x, y) ->
       if @win || @lose then return
       console.log x, y
@@ -200,14 +190,19 @@ export default m =
     hex_border: (cell) ->
       cell.x == 0 || cell.y == 0 || cell.x == @col-1 || cell.y == @row-1
 
-    get_goals: (came_from) ->
+    out_of_hex: (cell) ->
+      cell.x < 0 || cell.y < 0 || cell.x > @col-1 || cell.y > @row-1
+
+    get_goals: (cost_so_far) ->
       array = []
-      for key, value of came_from
-        cell = @point ~~key.split('-')[0], ~~key.split('-')[1]
-        if @hex_border(cell)
-          array.push cell
-      array.forEach (c) =>
-        c.distance = @hex_distance c, @cat
+      for key, value of cost_so_far
+        do (key) =>
+          x = ~~key.split('-')[0]
+          y = ~~key.split('-')[1]
+          cell = @point x, y
+          if @hex_border cell
+            cell.distance = value
+            array.push cell
       array.sort (a, b) -> a.distance - b.distance
       array[0]
 
@@ -218,8 +213,9 @@ export default m =
       maxMovement = (@col + 1) * (@row + 1)
       radius = Math.max(@col, @row)
       bfs = @breadthFirstSearch @cat, maxMovement, radius, @selected
+      @bfs = bfs
       path = [] #maybe many paths
-      goal = @get_goals(bfs.came_from)
+      goal = @get_goals(bfs.cost_so_far)
       p = goal
       while p && @hex2key(p) != @hex2key(@cat)
         path.push p
@@ -257,23 +253,24 @@ export default m =
         @lose = false
         console.info "YOU WIN"
 
-
     breadthFirstSearch: (start, maxMovement, radius, blocked) ->
+      start_key = @hex2key start
       cost_so_far = {}
-      cost_so_far[@hex2key(start)] = 0
+      cost_so_far[start_key] = 0
       came_from = {}
-      came_from[@hex2key(start)] = null
+      came_from[start_key] = null
       fringes = [ [ start ] ]
       k = 0
       while k < maxMovement && fringes[k].length > 0
         fringes[k + 1] = []
         for cell in fringes[k]
-          break if @hex_border cell
+          #break if @hex_border cell
           neighbors = @neighbor cell.x, cell.y
           for neighbor in neighbors
-            if !cost_so_far[@hex2key(neighbor)] and !blocked[@hex2key(neighbor)]
-              cost_so_far[@hex2key(neighbor)] = k + 1
-              came_from[@hex2key(neighbor)] = cell
+            key = @hex2key neighbor
+            if !cost_so_far[key] and !blocked[key] and !@out_of_hex neighbor
+              cost_so_far[key] = k + 1
+              came_from[key] = cell
               fringes[k + 1].push neighbor
         k++
       {

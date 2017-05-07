@@ -1,5 +1,10 @@
 <template>
-  <g class="title" :transform="transformG" @click="select">
+  <g @mouseenter="enter"
+     @mouseout="out"
+     class="title"
+     :transform="transformG"
+     @dblclick="unselect"
+     @click="select">
     <ellipse :rx="radius"
              :ry="radius*0.95"
              :class="status">
@@ -20,23 +25,17 @@
       cell: Object
       interval: Number
       showCoord: Boolean
-      #caught:
-      #  type: Boolean
-      #  default: false
-      #neighbor:
-      #  type: Array
-      #  default: -> []
     data: ->
       sqrt3: Math.sqrt(3)
 
     computed:
-      #blocked: -> @cell.blocked || false
-
       caught: -> @cell.caught || false
 
       path: -> @cell.path || false
 
       selected: -> @cell.selected || false
+
+      insight: -> @cell.insight || false
 
       x: -> @cell.x
 
@@ -49,19 +48,18 @@
 
       status: ->
         if @caught
-          if @$parent.win || @$parent.lose
+          if @$parent.finish
             'finished'
           else
             'caught'
-        else if @path
-          'path'
         else if @selected
           'selected'
+        else if @insight
+          'insight'
+        else if @path
+          'path'
         else
           ''
-
-    created: ->
-      #console.log @$parent.col, @$parent.row
 
     methods:
       hello: ->
@@ -69,8 +67,21 @@
 
       select: ->
         if @selected || @caught then return
-        @$parent.pick(@x, @y)
+        @$parent.pick @x, @y
 
+      unselect: ->
+        if !@selected || @caught then return
+        @$parent.unpick @x, @y
+
+      #Throttle
+      enter: ->
+        if @selected || @caught then return
+        @$parent.next_path @x, @y, @path
+
+      #Throttle
+      out: ->
+        if @selected || @caught then return
+        @$parent.reset_path @path
 
 </script>
 
@@ -97,6 +108,10 @@ ellipse {
 
 .path {
   fill: white;
+}
+
+.insight {
+  fill: darkorange;
 }
 
 .finished {
